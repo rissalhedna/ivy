@@ -4,6 +4,18 @@ from ivy.func_wrapper import with_unsupported_dtypes
 from . import backend_version
 
 
+def l1_normalize(
+    x: Union[tf.Tensor, tf.Variable],
+    /,
+    *,
+    axis: Optional[int] = None,
+    out: Optional[tf.Tensor] = None,
+) -> tf.Tensor:
+    denorm = tf.norm(x, ord=1, axis=axis, keepdims=True)
+    denorm = tf.math.maximum(denorm, 1e-12)
+    return tf.math.divide(x, denorm)
+
+
 def l2_normalize(
     x: Union[tf.Tensor, tf.Variable],
     /,
@@ -16,7 +28,7 @@ def l2_normalize(
     return tf.math.divide(x, denorm)
 
 
-@with_unsupported_dtypes({"2.12.0 and below": ("float16", "bfloat16")}, backend_version)
+@with_unsupported_dtypes({"2.13.0 and below": ("float16", "bfloat16")}, backend_version)
 def batch_norm(
     x: Union[tf.Tensor, tf.Variable],
     mean: Union[tf.Tensor, tf.Variable],
@@ -25,17 +37,17 @@ def batch_norm(
     *,
     scale: Optional[Union[tf.Tensor, tf.Variable]] = None,
     offset: Optional[Union[tf.Tensor, tf.Variable]] = None,
-    training: bool = False,
-    eps: float = 1e-5,
-    momentum: float = 1e-1,
-    data_format: str = "NSC",
+    training: Optional[bool] = False,
+    eps: Optional[float] = 1e-5,
+    momentum: Optional[float] = 1e-1,
+    data_format: Optional[str] = "NSC",
     out: Optional[
         Tuple[
             Union[tf.Tensor, tf.Variable],
             Union[tf.Tensor, tf.Variable],
             Union[tf.Tensor, tf.Variable],
         ]
-    ],
+    ] = None,
 ) -> Tuple[
     Union[tf.Tensor, tf.Variable],
     Union[tf.Tensor, tf.Variable],
@@ -79,17 +91,17 @@ def instance_norm(
     *,
     scale: Optional[Union[tf.Tensor, tf.Variable]] = None,
     offset: Optional[Union[tf.Tensor, tf.Variable]] = None,
-    training: bool = False,
-    eps: float = 1e-5,
-    momentum: float = 1e-1,
-    data_format: str = "NSC",
+    training: Optional[bool] = False,
+    eps: Optional[float] = 1e-5,
+    momentum: Optional[float] = 1e-1,
+    data_format: Optional[str] = "NSC",
     out: Optional[
         Tuple[
             Union[tf.Tensor, tf.Variable],
             Union[tf.Tensor, tf.Variable],
             Union[tf.Tensor, tf.Variable],
         ]
-    ],
+    ] = None,
 ) -> Tuple[
     Union[tf.Tensor, tf.Variable],
     Union[tf.Tensor, tf.Variable],
@@ -121,7 +133,6 @@ def instance_norm(
         training=training,
         eps=eps,
         momentum=momentum,
-        out=out,
     )
     xnormalized = tf.reshape(xnormalized, (*S, N, C))
     if data_format == "NCS":

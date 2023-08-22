@@ -53,7 +53,7 @@ def tril_indices_from(arr, k=0):
 # unravel_index
 @to_ivy_arrays_and_back
 def unravel_index(indices, shape):
-    ret = [x.astype("int64") for x in ivy.unravel_index(indices, shape)]
+    ret = [x.astype(indices.dtype) for x in ivy.unravel_index(indices, shape)]
     return tuple(ret)
 
 
@@ -80,3 +80,19 @@ def diag_indices_from(arr):
         raise ValueError("All dimensions of input must be of equal length")
     idx = ivy.arange(n, dtype=int)
     return (idx,) * ndim
+
+
+@to_ivy_arrays_and_back
+def indices(dimensions, dtype=int, sparse=False):
+    if sparse:
+        return tuple(
+            ivy.arange(dim)
+            .expand_dims(
+                axis=[j for j in range(len(dimensions)) if i != j],
+            )
+            .astype(dtype)
+            for i, dim in enumerate(dimensions)
+        )
+    else:
+        grid = ivy.meshgrid(*[ivy.arange(dim) for dim in dimensions], indexing="ij")
+        return ivy.stack(grid, axis=0).astype(dtype)

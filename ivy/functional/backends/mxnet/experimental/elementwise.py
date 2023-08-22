@@ -3,6 +3,21 @@ from numbers import Number
 import mxnet as mx
 
 from ivy.utils.exceptions import IvyNotImplementedException
+from ivy.func_wrapper import with_supported_dtypes
+from .. import backend_version
+
+
+@with_supported_dtypes(
+    {"1.9.1 and below": ("float16", "float32", "float64")},
+    backend_version,
+)
+def lgamma(
+    x: Union[(None, mx.ndarray.NDArray)],
+    /,
+    *,
+    out: Optional[Union[(None, mx.ndarray.NDArray)]] = None,
+) -> Union[(None, mx.ndarray.NDArray)]:
+    return mx.np.log(mx.npx.gamma(x))
 
 
 def sinc(
@@ -24,40 +39,9 @@ def fmax(
     raise IvyNotImplementedException()
 
 
-def fmin(
-    x1: Union[(None, mx.ndarray.NDArray)],
-    x2: Union[(None, mx.ndarray.NDArray)],
-    /,
-    *,
-    out: Optional[Union[(None, mx.ndarray.NDArray)]] = None,
-) -> Union[(None, mx.ndarray.NDArray)]:
-    raise IvyNotImplementedException()
-
-
-def trapz(
-    y: Union[(None, mx.ndarray.NDArray)],
-    /,
-    *,
-    x: Optional[Union[(None, mx.ndarray.NDArray)]] = None,
-    dx: float = 1.0,
-    axis: int = (-1),
-    out: Optional[Union[(None, mx.ndarray.NDArray)]] = None,
-) -> Union[(None, mx.ndarray.NDArray)]:
-    raise IvyNotImplementedException()
-
-
 def float_power(
     x1: Union[(None, mx.ndarray.NDArray, float, list, tuple)],
     x2: Union[(None, mx.ndarray.NDArray, float, list, tuple)],
-    /,
-    *,
-    out: Optional[Union[(None, mx.ndarray.NDArray)]] = None,
-) -> Union[(None, mx.ndarray.NDArray)]:
-    raise IvyNotImplementedException()
-
-
-def exp2(
-    x: Union[(None, mx.ndarray.NDArray, float, list, tuple)],
     /,
     *,
     out: Optional[Union[(None, mx.ndarray.NDArray)]] = None,
@@ -117,29 +101,6 @@ def isclose(
     rtol: float = 1e-05,
     atol: float = 1e-08,
     equal_nan: bool = False,
-    out: Optional[Union[(None, mx.ndarray.NDArray)]] = None,
-) -> Union[(None, mx.ndarray.NDArray)]:
-    raise IvyNotImplementedException()
-
-
-def nan_to_num(
-    x: Union[(None, mx.ndarray.NDArray)],
-    /,
-    *,
-    copy: bool = True,
-    nan: Union[(float, int)] = 0.0,
-    posinf: Optional[Union[(float, int)]] = None,
-    neginf: Optional[Union[(float, int)]] = None,
-    out: Optional[Union[(None, mx.ndarray.NDArray)]] = None,
-) -> Union[(None, mx.ndarray.NDArray)]:
-    raise IvyNotImplementedException()
-
-
-def logaddexp2(
-    x1: Union[(None, mx.ndarray.NDArray, float, list, tuple)],
-    x2: Union[(None, mx.ndarray.NDArray, float, list, tuple)],
-    /,
-    *,
     out: Optional[Union[(None, mx.ndarray.NDArray)]] = None,
 ) -> Union[(None, mx.ndarray.NDArray)]:
     raise IvyNotImplementedException()
@@ -211,25 +172,6 @@ def diff(
     raise IvyNotImplementedException()
 
 
-def angle(
-    input: Union[(None, mx.ndarray.NDArray)],
-    /,
-    *,
-    deg: Optional[bool] = None,
-    out: Optional[Union[(None, mx.ndarray.NDArray)]] = None,
-) -> Union[(None, mx.ndarray.NDArray)]:
-    raise IvyNotImplementedException()
-
-
-def imag(
-    val: Union[(None, mx.ndarray.NDArray)],
-    /,
-    *,
-    out: Optional[Union[(None, mx.ndarray.NDArray)]] = None,
-) -> Union[(None, mx.ndarray.NDArray)]:
-    raise IvyNotImplementedException()
-
-
 def zeta(
     x: Union[(None, mx.ndarray.NDArray)],
     q: Union[(None, mx.ndarray.NDArray)],
@@ -254,15 +196,6 @@ def gradient(
 def xlogy(
     x: Union[(None, mx.ndarray.NDArray)],
     y: Union[(None, mx.ndarray.NDArray)],
-    /,
-    *,
-    out: Optional[Union[(None, mx.ndarray.NDArray)]] = None,
-) -> Union[(None, mx.ndarray.NDArray)]:
-    raise IvyNotImplementedException()
-
-
-def real(
-    x: Union[(None, mx.ndarray.NDArray)],
     /,
     *,
     out: Optional[Union[(None, mx.ndarray.NDArray)]] = None,
@@ -297,4 +230,13 @@ def frexp(
         Union[(Tuple[(None, None)], Tuple[(mx.ndarray.NDArray, mx.ndarray.NDArray)])]
     ] = None,
 ) -> Union[(Tuple[(None, None)], Tuple[(mx.ndarray.NDArray, mx.ndarray.NDArray)])]:
+    raise IvyNotImplementedException()
+
+
+def modf(
+    x: Union[(None, mx.ndarray.NDArray)],
+    /,
+    *,
+    out: Optional[Union[(None, mx.ndarray.NDArray)]] = None,
+) -> Union[(None, mx.ndarray.NDArray)]:
     raise IvyNotImplementedException()

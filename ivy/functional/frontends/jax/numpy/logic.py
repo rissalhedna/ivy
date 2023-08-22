@@ -6,6 +6,18 @@ from ivy.functional.frontends.jax.func_wrapper import (
 from ivy.functional.frontends.jax.numpy import (
     promote_types_of_jax_inputs as promote_jax_arrays,
 )
+from ivy.utils.exceptions import IvyNotImplementedException
+from ivy.func_wrapper import with_unsupported_dtypes
+
+
+def _packbits_nested_list_padding(arr, pad_length):
+    if arr.ndim > 1:
+        nested_list = []
+        for sub_arr in arr:
+            nested_list.append(_packbits_nested_list_padding(sub_arr, pad_length))
+        return nested_list
+    else:
+        return arr.zero_pad(pad_width=[[0, pad_length]])
 
 
 @to_ivy_arrays_and_back
@@ -47,42 +59,42 @@ def isposinf(x, /, out=None):
 
 
 @to_ivy_arrays_and_back
-def not_equal(x1, x2):
+def not_equal(x1, x2, /):
     x1, x2 = promote_jax_arrays(x1, x2)
     return ivy.not_equal(x1, x2)
 
 
 @to_ivy_arrays_and_back
-def less(x1, x2):
+def less(x1, x2, /):
     x1, x2 = promote_jax_arrays(x1, x2)
     return ivy.less(x1, x2)
 
 
 @to_ivy_arrays_and_back
-def less_equal(x1, x2):
+def less_equal(x1, x2, /):
     x1, x2 = promote_jax_arrays(x1, x2)
     return ivy.less_equal(x1, x2)
 
 
 @to_ivy_arrays_and_back
-def greater(x1, x2):
+def greater(x1, x2, /):
     x1, x2 = promote_jax_arrays(x1, x2)
     return ivy.greater(x1, x2)
 
 
 @to_ivy_arrays_and_back
-def greater_equal(x1, x2):
+def greater_equal(x1, x2, /):
     x1, x2 = promote_jax_arrays(x1, x2)
     return ivy.greater_equal(x1, x2)
 
 
 @to_ivy_arrays_and_back
-def isnan(x, out=None):
-    return ivy.isnan(x, out=out)
+def isnan(x, /):
+    return ivy.isnan(x)
 
 
 @to_ivy_arrays_and_back
-def equal(x1, x2):
+def equal(x1, x2, /):
     x1, x2 = promote_jax_arrays(x1, x2)
     return ivy.equal(x1, x2)
 
@@ -93,24 +105,24 @@ def all(a, axis=None, out=None, keepdims=False, *, where=False):
 
 
 @to_ivy_arrays_and_back
-def bitwise_and(x1, x2):
+def bitwise_and(x1, x2, /):
     x1, x2 = promote_jax_arrays(x1, x2)
     return ivy.bitwise_and(x1, x2)
 
 
 @to_ivy_arrays_and_back
-def bitwise_not(x):
+def bitwise_not(x, /):
     return ivy.bitwise_invert(x)
 
 
 @to_ivy_arrays_and_back
-def bitwise_or(x1, x2):
+def bitwise_or(x1, x2, /):
     x1, x2 = promote_jax_arrays(x1, x2)
     return ivy.bitwise_or(x1, x2)
 
 
 @to_ivy_arrays_and_back
-def bitwise_xor(x1, x2):
+def bitwise_xor(x1, x2, /):
     x1, x2 = promote_jax_arrays(x1, x2)
     return ivy.bitwise_xor(x1, x2)
 
@@ -126,7 +138,6 @@ def any(a, axis=None, out=None, keepdims=False, *, where=None):
 
 
 alltrue = all
-
 
 sometrue = any
 from ivy.functional.frontends.jax.numpy import promote_types_of_jax_inputs
@@ -153,6 +164,11 @@ def invert(x, /):
 @to_ivy_arrays_and_back
 def isfinite(x, /):
     return ivy.isfinite(x)
+
+
+@to_ivy_arrays_and_back
+def isin(element, test_elements, assume_unique=False, invert=False):
+    return ivy.isin(element, test_elements, assume_unique=assume_unique, invert=invert)
 
 
 @to_ivy_arrays_and_back
@@ -184,7 +200,8 @@ def isscalar(x, /):
 
 @to_ivy_arrays_and_back
 def left_shift(x1, x2):
-    return ivy.isscalar(x1, x2)
+    # TODO: implement
+    raise IvyNotImplementedException()
 
 
 @to_ivy_arrays_and_back
@@ -215,10 +232,52 @@ def iscomplex(x: any):
 
 @to_ivy_arrays_and_back
 def iscomplexobj(x):
-    if x.ndim == 0:
-        return ivy.is_complex_dtype(ivy.dtype(x))
-    for ele in x:
-        if ivy.is_complex_dtype(ivy.dtype(ele)):
-            return True
-        else:
-            return False
+    return ivy.is_complex_dtype(ivy.dtype(x))
+
+
+@to_ivy_arrays_and_back
+@with_unsupported_dtypes({"0.4.14 and below": ("bfloat16", "bool")}, "jax")
+def setxor1d(ar1, ar2, assume_unique=False):
+    common_dtype = ivy.promote_types(ivy.dtype(ar1), ivy.dtype(ar2))
+    ar1 = ivy.asarray(ar1, dtype=common_dtype)
+    ar2 = ivy.asarray(ar2, dtype=common_dtype)
+    if not assume_unique:
+        ar1 = ivy.unique_values(ar1)
+        ar2 = ivy.unique_values(ar2)
+    ar1 = ivy.reshape(ar1, (-1,))
+    ar2 = ivy.reshape(ar2, (-1,))
+    aux = ivy.concat([ar1, ar2], axis=0)
+    if aux.size == 0:
+        return aux
+    aux = ivy.sort(aux)
+    flag = ivy.concat(
+        (ivy.array([True]), ivy.not_equal(aux[1:], aux[:-1]), ivy.array([True])), axis=0
+    )
+    mask = flag[1:] & flag[:-1]
+    if ivy.all(ivy.logical_not(mask)):
+        ret = ivy.asarray([], dtype=common_dtype)
+    else:
+        ret = aux[mask]
+    return ret
+
+
+@to_ivy_arrays_and_back
+def packbits(x, /, *, axis=None, bitorder="big"):
+    x = ivy.greater(x, ivy.zeros_like(x)).astype("uint8")
+    bits = ivy.arange(8, dtype="uint8")
+    if bitorder == "big":
+        bits = bits[::-1]
+    if axis is None:
+        x = ivy.flatten(x)
+        axis = 0
+    x = ivy.swapaxes(x, axis, -1)
+
+    remainder = x.shape[-1] % 8
+    if remainder:
+        x = _packbits_nested_list_padding(x, 8 - remainder)
+        x = ivy.array(x)
+
+    x = ivy.reshape(x, list(x.shape[:-1]) + [x.shape[-1] // 8, 8])
+    bits = ivy.expand_dims(bits, axis=tuple(range(x.ndim - 1)))
+    packed = (x << bits).sum(axis=-1).astype("uint8")
+    return ivy.swapaxes(packed, axis, -1)
